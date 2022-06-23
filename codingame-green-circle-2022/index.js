@@ -82,12 +82,12 @@ let debug = true,
 while (true) {
 	let gamePhase = _readline(),
 		nApplications = parseInt(_readline()),
-		applications = [...Array(nApplications)].map(_ => new Application(_readline().split(' '))),
-		players = [...Array(2)].map(_ => new Player(_readline().split(' '))),
+		applications = [...Array(nApplications)].map(() => new Application(_readline().split(' '))),
+		players = [...Array(2)].map(() => new Player(_readline().split(' '))),
 		nCardLocations = parseInt(_readline()),
-		cardsLocations = [...Array(nCardLocations)].map(_ => new Card(_readline().split(' '))),
+		cardsLocations = [...Array(nCardLocations)].map(() => new Card(_readline().split(' '))),
 		nPossibleMoves = parseInt(_readline()),
-		possibleMoves = [...Array(nPossibleMoves)].map(_ => new Move(_readline().split(' ')));
+		possibleMoves = [...Array(nPossibleMoves)].map(() => new Move(_readline().split(' ')));
 
 	if (gamePhase === 'MOVE') {
 
@@ -105,13 +105,67 @@ while (true) {
 			.map(a => a.index);
 
 		let action = 'RANDOM';
+		const isCloseToOpponent = (position) => {
+			let positionOfOpponent = players[1].playerLocation;
+			return position == positionOfOpponent;
+		}
 
 		for (let index of mostNeeded) {
+			let match = possibleMoves.filter(move => move.name === 'MOVE' && move.target === index);
+			if (match.length > 0 && !isCloseToOpponent(match.target)) {
+				action = `${match[0].name} ${match[0].target}`;
+				break;
+			}
+		}
+
+		if (action === 'RANDOM') for (let index of mostNeeded) {
 			let match = possibleMoves.filter(move => move.name === 'MOVE' && move.target === index);
 			if (match.length > 0) {
 				action = `${match[0].name} ${match[0].target}`;
 				break;
 			}
+		}
+
+		console.log(action);
+
+	} else if (gamePhase === ' GIVE_CARD') {
+
+		let needed = applications
+			.map(a => a.needed())
+			.reduce(function sumArrayIndexByIndex(prev, next) {
+				return prev.map((value, index) => value + next[index]);
+			})
+
+		let leastNeeded = needed
+			.map((value, index) => ({ value, index }))
+			.sort()
+			.map(a => a.index);
+
+		let action = 'RANDOM';
+
+		for (let index of leastNeeded) {
+			let match = possibleMoves.filter(move => move.name === 'GIVE' && move.target === index);
+			if (match.length > 0) {
+				action = `${match[0].name} ${match[0].target}`;
+				break;
+			}
+		}
+
+		console.log(action);
+
+	} else if (gamePhase === 'PLAY_CARD') {
+
+		let hand = cardsLocations.filter(card => card.cardsLocation === 'HAND')[0]
+
+		let action = 'WAIT';
+		if (hand.trainingCardsCount > 0) {
+			action = 'TRAINING'
+		} else if (hand.architectureStudyCardsCount > 0) {
+			action = 'ARCHITECTURE_STUDY'
+		} else if (hand.codeReviewCardsCount > 0) {
+			action = 'CODE_REVIEW'
+		} else if (hand.refactoringCardsCount > 0 && players[0].technicalDebtCardsCount > 0) {
+			action = 'REFACTORING'
 		}
 
 		console.log(action);
@@ -126,7 +180,7 @@ while (true) {
 				.map(function penaltyIfNotInHand(value, index) {
 					return handCount[index] - value;
 				})
-				.reduce(function sumArray (prev, next) {
+				.reduce(function sumArray(prev, next) {
 					return prev + next;
 				}));
 
