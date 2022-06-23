@@ -1,0 +1,15 @@
+{
+	"name": "codingame-green-circle-2022",
+	"version": "1.0.0",
+	"description": "Participation au coding game Green Circle 2022",
+	"main": "index.js",
+	"scripts": {
+		"start": "node index.js"
+	},
+	"keywords": [],
+	"author": "Yvan RAZAFINDRAMANANA",
+	"license": "MIT",
+	"devDependencies": {
+		"eslint": "^8.18.0"
+	}
+}
