@@ -73,11 +73,11 @@ class Move {
 
 let debug = true,
 	_readline = () => {
+		// eslint-disable-next-line no-undef
 		let entry = readline();
 		if (debug) console.error(entry);
 		return entry;
-	},
-	applications = [];
+	};
 
 while (true) {
 	let gamePhase = _readline(),
@@ -90,12 +90,18 @@ while (true) {
 		possibleMoves = [...Array(nPossibleMoves)].map(_ => new Move(_readline().split(' ')));
 
 	if (gamePhase === 'MOVE') {
+
 		let needed = applications
 			.map(a => a.needed())
-			.reduce((prev, next) => prev.map((value, index) => value + next[index]))
+			.reduce(function sumArrayIndexByIndex(prev, next) {
+				return prev.map((value, index) => value + next[index]);
+			})
+
 		let mostNeeded = needed
 			.map((value, index) => ({ value, index }))
-			.sort((a, b) => b.value - a.value)
+			.sort(function reverseNaturalOrder(a, b) {
+				return b.value - a.value;
+			})
 			.map(a => a.index);
 
 		let action = 'RANDOM';
@@ -109,18 +115,26 @@ while (true) {
 		}
 
 		console.log(action);
+
 	} else if (gamePhase === 'RELEASE') {
+
 		let hand = cardsLocations.filter(card => card.cardsLocation === 'HAND')[0]
 		let handCount = hand.count();
 
 		let releaseScore = applications
-			.map(a => a.needed().map((value, index) => handCount[index] - value).reduce((prev, next) => prev + next));
-
-		console.error('releaseScore', releaseScore);
+			.map(a => a.needed()
+				.map(function penaltyIfNotInHand(value, index) {
+					return handCount[index] - value;
+				})
+				.reduce(function sumArray (prev, next) {
+					return prev + next;
+				}));
 
 		let bestRelease = releaseScore
 			.map((value, index) => ({ value, index }))
-			.sort((a, b) => b.value - a.value)
+			.sort(function reverseNaturalOrder(a, b) {
+				return b.value - a.value;
+			})
 			.map(a => a.index);
 
 		let action = 'RANDOM';
@@ -134,8 +148,11 @@ while (true) {
 		}
 
 		console.log(action);
+
 	} else {
+
 		console.log('RANDOM');
+
 	}
 
 }
