@@ -38,6 +38,18 @@
 			"problemMatcher": "$msCompile"
 		},
 		{
+			"label": "exercice-4",
+			"command": "dotnet",
+			"type": "process",
+			"args": [
+				"build",
+				"${workspaceFolder}/exercice-4/exercice-4.csproj",
+				"/property:GenerateFullPaths=true",
+				"/consoleloggerparameters:NoSummary"
+			],
+			"problemMatcher": "$msCompile"
+		},
+		{
 			"label": "build",
 			"command": "dotnet",
 			"type": "process",
