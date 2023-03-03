@@ -85,6 +85,7 @@ namespace CSharpContestProject
 			return int.Parse(sb.ToString());
 		}
 
+		// https://stackoverflow.com/questions/1952153/what-is-the-best-way-to-find-all-combinations-of-items-in-an-array
 		private static IEnumerable<IEnumerable<T>> Permutations<T>(IEnumerable<T> list, int length) where T : IComparable
 		{
 			if (length == 0) return Array.Empty<IEnumerable<T>>();

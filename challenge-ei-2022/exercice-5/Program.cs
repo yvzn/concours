@@ -17,8 +17,8 @@ namespace CSharpContestProject
 	{
 		static int? numeroEtapeFinale;
 		static int? dureeMaximum;
-		static ICollection<Liaison> liaisons = new List<Liaison>();
-		static IDictionary<int, IEnumerable<IEnumerable<int>>> cacheTrajets = new Dictionary<int, IEnumerable<IEnumerable<int>>>();
+		static decimal?[,] grapheDuree;
+		static decimal?[,] grapheCoutCarbone;
 
 		static void Main(string[] args)
 		{
@@ -34,18 +34,20 @@ namespace CSharpContestProject
 				{
 					numeroEtapeFinale = ligne[0];
 					dureeMaximum = ligne[1];
+					var nombreEtapes = ligne[0] + 1;
+					grapheDuree = new decimal?[nombreEtapes, nombreEtapes]; 
+					grapheCoutCarbone = new decimal?[nombreEtapes, nombreEtapes];
 					continue;
 				}
 
 				if (ligne.Length >= 4)
-				{
-					liaisons.Add(new Liaison
-					{
-						Depart = ligne[0],
-						Arrivee = ligne[1],
-						Duree = ligne[2],
-						CoutCarbone = ligne[3],
-					});
+				{					
+						var depart = ligne[0];
+						var arrivee = ligne[1];
+						var duree = ligne[2];
+						var coutCarbone = ligne[3];
+						grapheDuree[depart, arrivee] = duree;
+						grapheCoutCarbone[depart, arrivee] = coutCarbone;
 				}
 			}
 
@@ -61,7 +63,6 @@ namespace CSharpContestProject
 			stopWatch.Restart();
 			foreach (var trajet in trajets)
 			{
-				// var (duree, cout) = Estimer(trajet);
 				var duree = trajet.duree;
 				var cout = trajet.coutCarbone;
 				if (duree < dureeMaximum && cout < coutCarboneMinimal)
@@ -91,29 +92,25 @@ namespace CSharpContestProject
 			var trajets = new HashSet<Trajet>();
 			trajets.Add(new Trajet { etapes = new List<int> { 0 }, duree = 0, coutCarbone = 0 });
 
-			var departs = liaisons.Select(l => l.Depart).ToHashSet();
-
 			IList<Trajet> trajetsAtraiter;
 			do
 			{
-				trajetsAtraiter = trajets.Where(t => departs.Contains(t.etapes.Last()) && t.etapes.Last() != numeroEtapeFinale).ToList();
+				trajetsAtraiter = trajets.Where(t => t.etapes.Last() != numeroEtapeFinale).ToList();
 
 				foreach (var trajet in trajetsAtraiter)
 				{
-					var suitesPossibles = liaisons.Where(l => l.Depart == trajet.etapes.Last()).ToList();
-					if (!suitesPossibles.Any())
-					{
-						continue;
-					}
-
 					trajets.Remove(trajet);
-					foreach (var suite in suitesPossibles)
+					for(var arrivee = 1; arrivee <= numeroEtapeFinale; ++arrivee )
 					{
+						if (!grapheDuree[trajet.etapes.Last(), arrivee].HasValue || !grapheCoutCarbone[trajet.etapes.Last(), arrivee].HasValue) {
+							continue;
+						}
+
 						var nouveauTrajet = new Trajet
 						{
-							etapes = trajet.etapes.Append(suite.Arrivee).ToList(),
-							duree = trajet.duree + suite.Duree,
-							coutCarbone = trajet.coutCarbone + suite.CoutCarbone,
+							etapes = trajet.etapes.Append(arrivee).ToList(),
+							duree = trajet.duree + grapheDuree[trajet.etapes.Last(), arrivee].Value,
+							coutCarbone = trajet.coutCarbone + grapheCoutCarbone[trajet.etapes.Last(), arrivee].Value,
 						};
 						if (nouveauTrajet.duree < dureeMaximum)
 						{
@@ -125,71 +122,6 @@ namespace CSharpContestProject
 			while (trajetsAtraiter.Any());
 
 			return trajets;
-		}
-
-
-		private static IEnumerable<IEnumerable<int>> GenererTrajets__()
-		{
-			return GenererTrajets(0);
-		}
-
-		private static IEnumerable<IEnumerable<int>> GenererTrajets(int origine)
-		{
-			if (cacheTrajets.TryGetValue(origine, out var cache))
-			{
-				return cache;
-			}
-
-			var trajets = liaisons
-				.Where(l => l.Depart == origine)
-				.Select(l => l.Arrivee)
-				.SelectMany(GenererTrajets)
-				.ToList();
-
-			if (trajets.Count == 0 && origine == numeroEtapeFinale)
-			{
-				return new[] { new[] { origine } };
-			}
-
-			var trajetsAvecOrigine = trajets.Select(trajet =>
-			{
-				var result = new List<int>() { origine };
-				result.AddRange(trajet);
-				return result;
-			});
-			cacheTrajets[origine] = trajetsAvecOrigine.ToList();
-			return trajetsAvecOrigine;
-		}
-
-		private static (decimal duree, decimal cout) Estimer(IEnumerable<int> trajet)
-		{
-			var duree = 0m;
-			var cout = 0m;
-			var etapePrecedente = -1;
-			var etapeCourante = -1;
-			var enumerator = trajet.GetEnumerator();
-			while (enumerator.MoveNext())
-			{
-				etapeCourante = enumerator.Current;
-				if (etapePrecedente < 0)
-				{
-					etapePrecedente = etapeCourante;
-					continue;
-				}
-
-				var liaison = liaisons
-					.Where(l => l.Depart == etapePrecedente && l.Arrivee == etapeCourante)
-					.FirstOrDefault();
-				if (liaison is null)
-				{
-					return (duree, cout);
-				}
-
-				duree += liaison.Duree;
-				cout += liaison.CoutCarbone;
-				etapePrecedente = etapeCourante;
-			}
-			return (duree, cout);
 		}
 
 		private static IEnumerable<int> Lire(string ligne)
