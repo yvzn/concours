@@ -44,6 +44,17 @@
 			"cwd": "${workspaceFolder}/exercice-4",
 			"stopAtEntry": false,
 			"console": "integratedTerminal"
+		},
+		{
+			"name": ".NET Core Launch (exercice-5)",
+			"type": "coreclr",
+			"request": "launch",
+			"preLaunchTask": "exercice-5",
+			"program": "${workspaceFolder}/exercice-5/bin/Debug/netcoreapp3.1/exercice-5.dll",
+			"args": [],
+			"cwd": "${workspaceFolder}/exercice-5",
+			"stopAtEntry": false,
+			"console": "integratedTerminal"
 		}
 	]
 }
