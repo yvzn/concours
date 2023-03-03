@@ -1,0 +1,38 @@
+{
+	"version": "0.2.0",
+	"configurations": [
+		{
+			"name": ".NET Core Launch (exercice-1)",
+			"type": "coreclr",
+			"request": "launch",
+			"preLaunchTask": "exercice-1",
+			"program": "${workspaceFolder}/exercice-1/bin/Debug/netcoreapp3.1/exercice-1.dll",
+			"args": [],
+			"cwd": "${workspaceFolder}/exercice-1",
+			"stopAtEntry": false,
+			"console": "integratedTerminal"
+		},
+		{
+			"name": ".NET Core Launch (exercice-2)",
+			"type": "coreclr",
+			"request": "launch",
+			"preLaunchTask": "exercice-2",
+			"program": "${workspaceFolder}/exercice-2/bin/Debug/netcoreapp3.1/exercice-2.dll",
+			"args": [],
+			"cwd": "${workspaceFolder}/exercice-2",
+			"stopAtEntry": false,
+			"console": "integratedTerminal"
+		},
+		{
+			"name": ".NET Core Launch (exercice-3)",
+			"type": "coreclr",
+			"request": "launch",
+			"preLaunchTask": "exercice-3",
+			"program": "${workspaceFolder}/exercice-3/bin/Debug/netcoreapp3.1/exercice-3.dll",
+			"args": [],
+			"cwd": "${workspaceFolder}/exercice-3",
+			"stopAtEntry": false,
+			"console": "integratedTerminal"
+		}
+	]
+}
