@@ -61,7 +61,9 @@ namespace CSharpContestProject
 			stopWatch.Restart();
 			foreach (var trajet in trajets)
 			{
-				var (duree, cout) = Estimer(trajet);
+				// var (duree, cout) = Estimer(trajet);
+				var duree = trajet.duree;
+				var cout = trajet.coutCarbone;
 				if (duree < dureeMaximum && cout < coutCarboneMinimal)
 				{
 					coutCarboneMinimal = cout;
@@ -77,7 +79,56 @@ namespace CSharpContestProject
 			Console.WriteLine(coutCarboneMinimal);
 		}
 
-		private static IEnumerable<IEnumerable<int>> GenererTrajets()
+		struct Trajet
+		{
+			public IList<int> etapes;
+			public decimal duree;
+			public decimal coutCarbone;
+		}
+
+		private static IEnumerable<Trajet> GenererTrajets()
+		{
+			var trajets = new HashSet<Trajet>();
+			trajets.Add(new Trajet { etapes = new List<int> { 0 }, duree = 0, coutCarbone = 0 });
+
+			var departs = liaisons.Select(l => l.Depart).ToHashSet();
+
+			IList<Trajet> trajetsAtraiter;
+			do
+			{
+				trajetsAtraiter = trajets.Where(t => departs.Contains(t.etapes.Last()) && t.etapes.Last() != numeroEtapeFinale).ToList();
+
+				foreach (var trajet in trajetsAtraiter)
+				{
+					var suitesPossibles = liaisons.Where(l => l.Depart == trajet.etapes.Last()).ToList();
+					if (!suitesPossibles.Any())
+					{
+						continue;
+					}
+
+					trajets.Remove(trajet);
+					foreach (var suite in suitesPossibles)
+					{
+						var nouveauTrajet = new Trajet
+						{
+							etapes = trajet.etapes.Append(suite.Arrivee).ToList(),
+							duree = trajet.duree + suite.Duree,
+							coutCarbone = trajet.coutCarbone + suite.CoutCarbone,
+						};
+						if (nouveauTrajet.duree < dureeMaximum)
+						{
+							trajets.Add(nouveauTrajet);
+						}
+					}
+				}
+			}
+			while (trajetsAtraiter.Any());
+
+			return trajets;
+		}
+
+
+		private static IEnumerable<IEnumerable<int>> GenererTrajets__()
 		{
 			return GenererTrajets(0);
 		}
