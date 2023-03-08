@@ -16,9 +16,8 @@ namespace CSharpContestProject
 	class Program
 	{
 		static int? numeroEtapeFinale;
-		static int? dureeMaximum;
-		static decimal?[,] grapheDuree;
-		static decimal?[,] grapheCoutCarbone;
+		static decimal? dureeMaximum;
+		static ICollection<Liaison> liaisons = new List<Liaison>();
 
 		static void Main(string[] args)
 		{
@@ -34,96 +33,119 @@ namespace CSharpContestProject
 				{
 					numeroEtapeFinale = ligne[0];
 					dureeMaximum = ligne[1];
-					var nombreEtapes = ligne[0] + 1;
-					grapheDuree = new decimal?[nombreEtapes, nombreEtapes]; 
-					grapheCoutCarbone = new decimal?[nombreEtapes, nombreEtapes];
 					continue;
 				}
 
 				if (ligne.Length >= 4)
-				{					
-						var depart = ligne[0];
-						var arrivee = ligne[1];
-						var duree = ligne[2];
-						var coutCarbone = ligne[3];
-						grapheDuree[depart, arrivee] = duree;
-						grapheCoutCarbone[depart, arrivee] = coutCarbone;
+				{
+					liaisons.Add(new Liaison
+					{
+						Depart = ligne[0],
+						Arrivee = ligne[1],
+						Duree = ligne[2],
+						CoutCarbone = ligne[3],
+					});
 				}
 			}
 
 			// Vous pouvez aussi effectuer votre traitement ici après avoir lu toutes les données
-			var coutCarboneMinimal = decimal.MaxValue;
+			var (dureeDepuisOrigine, _) = BellmanFordDuree();
 
-			var stopWatch = new Stopwatch();
-			stopWatch.Start();
-			var trajets = GenererTrajets();
-			stopWatch.Stop();
-			Console.Error.WriteLine(stopWatch.Elapsed);
+			var (d, _) = BellmanFordCoutCarbone(dureeDepuisOrigine);
 
-			stopWatch.Restart();
-			foreach (var trajet in trajets)
+			if (d[numeroEtapeFinale.Value] == decimal.MaxValue)
 			{
-				var duree = trajet.duree;
-				var cout = trajet.coutCarbone;
-				if (duree < dureeMaximum && cout < coutCarboneMinimal)
-				{
-					coutCarboneMinimal = cout;
-				}
-			}
-			stopWatch.Stop();
-			Console.Error.WriteLine(stopWatch.Elapsed);
+				Console.WriteLine(-1);
+				return;
+			} 
 
-			if (coutCarboneMinimal == decimal.MaxValue)
-			{
-				coutCarboneMinimal = -1;
-			}
-			Console.WriteLine(coutCarboneMinimal);
+			Console.WriteLine(d[numeroEtapeFinale.Value]);
 		}
 
-		struct Trajet
+		private static (decimal[] d, decimal?[] pred) BellmanFordDuree()
 		{
-			public IList<int> etapes;
-			public decimal duree;
-			public decimal coutCarbone;
-		}
+			// https://fr.wikipedia.org/wiki/Algorithme_de_Bellman-Ford
 
-		private static IEnumerable<Trajet> GenererTrajets()
-		{
-			var trajets = new HashSet<Trajet>();
-			trajets.Add(new Trajet { etapes = new List<int> { 0 }, duree = 0, coutCarbone = 0 });
+			//    pour u dans S faire
+			//    |       d[u] = +∞
+			//    |       pred[u] = null
+			//    d[s] = 0
+			//    //Boucle principale
+			//    pour k = 1 jusqu'à taille(S) - 1 faire
+			//     |      pour chaque arc (u, v) du graphe faire
+			//     |      |    si d[u] + poids(u, v) < d[v] alors
+			//     |      |    |    d[v] := d[u] + poids(u, v)
+			//     |      |    |    pred[v]:= u
 
-			IList<Trajet> trajetsAtraiter;
-			do
+			//    retourner d, pred
+			var taille = numeroEtapeFinale.Value + 1;
+			var graphe = liaisons;
+			var s = 0;
+
+			var d = new decimal[taille];
+			var pred = new decimal?[taille];
+
+			for (var u = 1; u < taille; ++u)
 			{
-				trajetsAtraiter = trajets.Where(t => t.etapes.Last() != numeroEtapeFinale).ToList();
+				d[u] = decimal.MaxValue;
+				pred[u] = default;
+			}
 
-				foreach (var trajet in trajetsAtraiter)
+			d[s] = 0;
+
+			for (var k = 1; k < taille; ++k)
+			{
+				foreach (var arc in graphe)
 				{
-					trajets.Remove(trajet);
-					for(var arrivee = 1; arrivee <= numeroEtapeFinale; ++arrivee )
+					var u = arc.Depart;
+					var v = arc.Arrivee;
+					var poids = arc.Duree;
+					if (d[u] + poids < d[v])
 					{
-						if (!grapheDuree[trajet.etapes.Last(), arrivee].HasValue || !grapheCoutCarbone[trajet.etapes.Last(), arrivee].HasValue) {
-							continue;
-						}
-
-						var nouveauTrajet = new Trajet
-						{
-							etapes = trajet.etapes.Append(arrivee).ToList(),
-							duree = trajet.duree + grapheDuree[trajet.etapes.Last(), arrivee].Value,
-							coutCarbone = trajet.coutCarbone + grapheCoutCarbone[trajet.etapes.Last(), arrivee].Value,
-						};
-						if (nouveauTrajet.duree < dureeMaximum)
-						{
-							trajets.Add(nouveauTrajet);
-						}
+						d[v] = d[u] + poids;
+						pred[v] = u;
 					}
 				}
 			}
-			while (trajetsAtraiter.Any());
 
-			return trajets;
+			return (d, pred);
 		}
 
+		private static (decimal[] d, decimal?[] pred) BellmanFordCoutCarbone(decimal[] dureeDepuisOrigine)
+		{
+			var taille = numeroEtapeFinale.Value + 1;
+			var graphe = liaisons;
+			var s = 0;
+
+			var d = new decimal[taille];
+			var pred = new decimal?[taille];
+
+			for (var u = 1; u < taille; ++u)
+			{
+				d[u] = decimal.MaxValue;
+				pred[u] = default;
+			}
+
+			d[s] = 0;
+
+			for (var k = 1; k < taille; ++k)
+			{
+				foreach (var arc in graphe)
+				{
+					var u = arc.Depart;
+					var v = arc.Arrivee;
+					var poids = arc.CoutCarbone;
+					var respectDureeMaximum = dureeDepuisOrigine[u] < decimal.MaxValue && dureeDepuisOrigine[u] + arc.Duree < dureeMaximum;
+					if (d[u] < decimal.MaxValue && d[u] + poids < d[v] && respectDureeMaximum)
+					{
+						d[v] = d[u] + poids;
+						pred[v] = u;
+					}
+				}
+			}
+
+			return (d, pred);
+		}
 		private static IEnumerable<int> Lire(string ligne)
 		{
 			var split = ligne.Split(' ', StringSplitOptions.RemoveEmptyEntries);
