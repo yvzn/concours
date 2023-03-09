@@ -74,47 +74,14 @@ namespace CSharpContestProject
 			return Combinations(tousLesIngredients, nb);
 		}
 
-		private static bool NextCombination(IList<int> num, int n, int k)
+		private static IEnumerable<IEnumerable<T>> Combinations<T>(IEnumerable<T> list, int length) where T : IComparable
 		{
-			bool finished;
-
-			var changed = finished = false;
-
-			if (k <= 0) return false;
-
-			for (var i = k - 1; !finished && !changed; i--)
-			{
-				if (num[i] < n - 1 - (k - 1) + i)
-				{
-					num[i]++;
-
-					if (i < k - 1)
-						for (var j = i + 1; j < k; j++)
-							num[j] = num[j - 1] + 1;
-					changed = true;
-				}
-				finished = i == 0;
-			}
-
-			return changed;
-		}
-
-		private static IEnumerable<IEnumerable<T>> Combinations<T>(IEnumerable<T> elements, int k)
-		{
-			var elem = elements.ToArray();
-			var size = elem.Length;
-
-			if (k > size) yield break;
-
-			var numbers = new int[k];
-
-			for (var i = 0; i < k; i++)
-				numbers[i] = i;
-
-			do
-			{
-				yield return numbers.Select(n => elem[n]);
-			} while (NextCombination(numbers, size, k));
+			if (length == 0) return Array.Empty<IEnumerable<T>>();
+			if (length == 1) return list.Select(t => new T[] { t });
+			
+			return Combinations(list, length - 1)
+				.SelectMany(t => list.Where(o => o.CompareTo(t.Last()) > 0),
+					(t1, t2) => t1.Concat(new T[] { t2 }));
 		}
 
 		private static (int, int) Lire1(string ligne)
