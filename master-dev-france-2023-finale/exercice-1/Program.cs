@@ -15,7 +15,8 @@ namespace CSharpContestProject
 	class Program
 	{
 		static int? N = default;
-		static int? P = default;
+		static List<Soumission> soumissions = new List<Soumission>();
+
 		static void Main(string[] args)
 		{
 			string line;
@@ -26,13 +27,25 @@ namespace CSharpContestProject
 				//
 				if (!N.HasValue)
 				{
-					(N, P) = Lire1(line);
+					N = int.Parse(line);
 					continue;
 				}
+
+				var ligne = Lire2(line).ToList();
+				var temps = int.Parse(ligne[0]);
+				var hash = ligne[1];
+				soumissions.Add(new Soumission { temps = temps, hash = hash });
 			}
 
 			// Vous pouvez aussi effectuer votre traitement ici après avoir lu toutes les données
+			var duplicatedHashes = soumissions
+			.GroupBy(s => s.hash)
+			.Where(g => g.Count() > 1)
+			.Select(g => g.First().hash)
+			.ToHashSet();
 
+			var result = soumissions.Where(s => !duplicatedHashes.Contains(s.hash)).Select(s => s.temps).OrderBy(x => x);
+			result.ToList().ForEach(Console.WriteLine);
 		}
 
 		private static (int, int) Lire1(string ligne)
@@ -41,10 +54,15 @@ namespace CSharpContestProject
 			return (split[0], split[1]);
 		}
 
-		private static IEnumerable<int> Lire2(string ligne)
+		private static IEnumerable<string> Lire2(string ligne)
 		{
-			var split = ligne.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-			return split.Select(int.Parse);
+			return ligne.Split(' ', StringSplitOptions.RemoveEmptyEntries);
 		}
+	}
+
+	internal class Soumission
+	{
+		public int temps { get; set; }
+		public string hash { get; set; }
 	}
 }
